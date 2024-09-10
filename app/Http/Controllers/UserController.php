@@ -2,152 +2,108 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StudentRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\UserRequest;
 
 class UserController extends Controller
 {
-    public function showAllUser()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        // PAGINATION METHOD 
-        // 1. PAGINATE 
-        // 2. SIMPLEPAGINATE
-        // 3. cursorPaginate (complasary orderBy inclued) 
-        $students = DB::table('students')->paginate(5);
-
-        // QUERY BUILDER METHOD----------------------
-        // $students = DB::table('students')->get();
-
-        // UNION METHOD-----------------------
-        // $teachers = DB::table('teachers');
-
-        // $students = DB::table('students')
-        // ->union($teachers)
-        // ->get();
-        // return $students;
-
-        // WHEN METHOD--------------------
-        // $students = DB::table('students')
-        //     ->when(true, function ($query) {
-        //         $query->where('age', '>', 20);
-        //     })
-        //     ->get();
-        // return $students;
-
-        // CHUNK METHOD---------------------
-        // $students = DB::table('students')->orderBy('id')->chunk(4, function ($students) {
-        //     foreach ($students as $student) {
-        //         echo $student->name . '</br>';
-        //     }
-        // });
-        // return $students;
-
-        // USING RAW SQL QUERY---------------------
-        // $students = DB::select('select * from students where id = ?', [5]);
-        // $students = DB::table('students')
-        //     ->selectRaw('count(*) as count_total, age')
-        // ->select(DB::raw('count(*) as count_total'), 'age')
-        // ->whereRaw('id = ?', 5)
-        // ->orderBy('age')
-        // ->orderByRaw('age')
-        // ->toSql();
-        // ->get();
-        // return $students;
-
-        // $students = DB::table('students')
-        //     ->selectRaw('count(*) as count_total, age')
-        //     ->havingRaw('age > ?', [25])
-        //     ->groupByRaw('age')
-        //     ->groupBy('age')
-        //     ->toSql();
-        //     ->get();
-        // return $students;
-
-        // $students = DB::select('insert into students (name, email, age, city) values (?, ?, ?, ?)', ['sk', 'sk@gmail.com', 24, 'Rajkot']);
-        // return $students;
-
-        // $students = DB::select('update students set name = "krunal" where id = ?', [11]);
-        // return $students;
-
-        // $students = DB::select('delete from students where id = ?', [11]);
-        // return $students;
-
-        return view('home', ['data' => $students]);
+        // $users = User::all();
+        $users = User::paginate(5);
+        return view('users', compact(('users')));
     }
 
-    public function addOrUpdateUser(string $id = null)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        $student = DB::table('students')->find($id);
-        return view('save', ['data' => $student ?? null]);
+        return view('add');
     }
 
-    public function deleteUser(string $id = null)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(UserRequest $request)
     {
-        $student = DB::table('students')->where('id', $id)->delete();
-        return $student ? redirect()->route('home') : null;
+        // METHOD - 1
+        // $user = new User;
+        // $user->name = $request->user_name;
+        // $user->email = $request->user_email;
+        // $user->age = $request->user_age;
+        // $user->state_code = $request->user_state_code;
+        // $user->save();
+
+        // METHOD - 2
+        User::create([
+            'name' => $request->user_name,
+            'email' => $request->user_email,
+            'age' => $request->user_age,
+            'state_code' => $request->user_state_code,
+        ]);
+
+        return redirect()->route('users.index')->with('status', 'New User Data added successfully.');
     }
 
-    public function saveUser(StudentRequest $request, string $id = null)
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
     {
-        $data = [
-            'name' => $request->student_name,
-            'email' => $request->student_email,
-            'age' => $request->student_age,
-            'city' => $request->student_city,
-        ];
-
-        $student = DB::table('students')->upsert(
-            [$data], // Values to insert/update
-            ['id'], // The unique key to check for update
-            ['name', 'email', 'age', 'city'] // Columns to update
-        );
-
-        if ($student) {
-            return redirect()->route('home')->with('success', 'User data saved successfully');
-        } else {
-            return 'Error saving data';
-        }
+        $user = User::find($id);
+        return view('view', compact('user'));
     }
 
-    //OLD METHOD 
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $user = User::find($id);
+        return view('update', compact('user'));
+    }
 
-    // public function addUser(StudentRequest $request)
-    // {
-    //     $student = DB::table('students')->insert(
-    //         [
-    //             'name' => $request->student_name,
-    //             'email' => $request->student_email,
-    //             'age' => $request->student_age,
-    //             'city' => $request->student_city,
-    //         ]
-    //     );
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UserRequest $request, string $id)
+    {
+        // METHOD - 1
+        // $user = User::find($id);
+        // $user->name = $request->user_name;
+        // $user->email = $request->user_email;
+        // $user->age = $request->user_age;
+        // $user->state_code = $request->user_state_code;
+        // $user->save();
 
-    //     if ($student) {
-    //         return redirect()->route('home');
-    //     } else {
-    //         return 'Data Not Found';
-    //     }
-    // }
+        // METHOD - 2
+        User::find($id)->update([
+            'name' => $request->user_name,
+            'email' => $request->user_email,
+            'age' => $request->user_age,
+            'state_code' => $request->user_state_code,
+        ]);
 
-    // public function updateUserData(StudentRequest $request, string $id)
-    // {
-    //     $student = DB::table('students')
-    //         ->where('id', $id)
-    //         ->update(
-    //             [
-    //                 'name' => $request->student_name,
-    //                 'email' => $request->student_email,
-    //                 'age' => $request->student_age,
-    //                 'city' => $request->student_city,
-    //             ]
-    //         );
+        return redirect()->route('users.index')->with('status', 'User Data updated successfully.');
+    }
 
-    //     if ($student) {
-    //         return redirect()->route('home');
-    //     } else {
-    //         return 'User Data not Updated';
-    //     }
-    // }
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        // METHOD - 1
+        $user = User::find($id);
+        $user->delete();
+
+        // METHOD - 2
+        // User::destroy($id);
+        return redirect()->route('users.index')->with('status', 'User Data Deleted Successfully');
+    }
 }
